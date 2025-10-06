@@ -289,7 +289,7 @@ export default function Lyrics() {
           </div>
         )}
 
-        {audioStatus && (
+        {/* {audioStatus && (
           <div className="bg-blue-500 text-white p-4 rounded-lg mb-4">
             <div className="flex items-center space-x-2">
               {audioLoading && (
@@ -298,7 +298,7 @@ export default function Lyrics() {
               <p className="text-sm">{audioStatus}</p>
             </div>
           </div>
-        )}
+        )} */}
 
         {lyrics && (
           <div className="bg-white rounded-2xl p-6 mb-6 flex-1 overflow-y-auto shadow-lg">
