@@ -1,4 +1,6 @@
-const BASE_URL = 'http://localhost:3000';
+const producationMode = import.meta.env.DEV
+
+const BASE_URL = producationMode ? 'http://localhost:3000' : 'https://birthday-ai-generator.onrender.com';
 
 export const API_ENDPOINTS = {
   // Register endpoints
