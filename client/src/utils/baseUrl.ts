@@ -14,7 +14,10 @@ export const API_ENDPOINTS = {
     updateDetails: `${BASE_URL}/api/song/update-details`,
     generateLyrics: `${BASE_URL}/api/song/generate-lyrics`,
     generateAudio: `${BASE_URL}/api/song/generate-audio`,
-  }
+  },
+  
+  // Users Endpoints
+  users: `${BASE_URL}/api/users`
 };
 
 // Custome Endpoint

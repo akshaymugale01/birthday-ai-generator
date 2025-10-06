@@ -170,6 +170,15 @@ This special day is just for you`;
         console.log("Successfully generated lyrics with Groq API", lyrics);
       } catch (groqError: any) {
         console.error("Groq API failed:", groqError.message);
+        
+        // Check if it's a rate limit error (429)
+        if (groqError.response && groqError.response.status === 429) {
+          return res.status(429).json({
+            success: false,
+            msg: "API limit exhausted. Please try again later or upgrade your plan."
+          });
+        }
+        
         console.log("Groq API error, using mock lyrics");
         lyrics = generateMockLyrics();
       }
@@ -220,27 +229,27 @@ export const generateAudio = async (req: Request, res: Response) => {
       singerVoice: string
     ) => {
       const tempoMap: { [key: string]: string } = {
-      Happy: "upbeat, energetic",
-      Calm: "slow, peaceful",
-      Romantic: "intimate, slow",
-      Funny: "playful, bouncy",
-      Motivational: "driving, powerful",
+        Happy: "upbeat, energetic",
+        Calm: "slow, peaceful",
+        Romantic: "intimate, slow",
+        Funny: "playful, bouncy",
+        Motivational: "driving, powerful",
       };
 
       const instrumentMap: { [key: string]: string } = {
-      Pop: "modern pop with synthesizers, electric guitar, drums, and bass",
-      Rock: "electric guitars, powerful drums, bass guitar with rock energy",
-      "Hip-Hop": "hip-hop beats, bass, electronic sounds, and urban style",
-      Rap: "strong beats, bass-heavy production, and rhythmic backing",
-      EDM: "electronic dance music with synthesizers, electronic beats, and drops",
-      Desi: "traditional Indian instruments like tabla, sitar, harmonium, and ethnic percussion",
+        Pop: "modern pop with synthesizers, electric guitar, drums, and bass",
+        Rock: "electric guitars, powerful drums, bass guitar with rock energy",
+        "Hip-Hop": "hip-hop beats, bass, electronic sounds, and urban style",
+        Rap: "strong beats, bass-heavy production, and rhythmic backing",
+        EDM: "electronic dance music with synthesizers, electronic beats, and drops",
+        Desi: "traditional Indian instruments like tabla, sitar, harmonium, and ethnic percussion",
       };
 
       const tempo = tempoMap[mood] || "";
       const instruments =
-      instrumentMap[genre] || "pop arrangement with guitar, piano, and drums";
+        instrumentMap[genre] || "pop arrangement with guitar, piano, and drums";
       const vocalStyle =
-      singerVoice === "Female" ? "female lead vocals" : "male lead vocals";
+        singerVoice === "Female" ? "female lead vocals" : "male lead vocals";
 
       const prompt = `Create birthday celebration song ans lyrics ${lyrics} gender ${vocalStyle}. 
       Musical style: ${tempo} ${genre} song with ${instruments}. 
@@ -256,10 +265,8 @@ export const generateAudio = async (req: Request, res: Response) => {
     ) {
       console.log("ElevenLabs API key not configured, trying Groq...");
     } else {
-      console.log(
-        "ElevenLabs API Key status: Connected ---------"
-      );
-      
+      console.log("ElevenLabs API Key status: Connected ---------");
+
       const elevenlabs = new ElevenLabsClient({
         apiKey: process.env.ELEVENLABS_API_KEY,
       });
@@ -306,26 +313,39 @@ export const generateAudio = async (req: Request, res: Response) => {
             "No additional details",
         });
 
-        if (elevenLabsError.message?.includes('bad_prompt') || elevenLabsError.message?.includes('Terms of Service')) {
-          console.log("🚫 ElevenLabs Music API: Prompt violated Terms of Service");
+        // Check if it's a rate limit error (429)
+        if (elevenLabsError.response && elevenLabsError.response.status === 429) {
+          return res.status(429).json({
+            success: false,
+            msg: "ElevenLabs API limit exhausted. Please try again later or upgrade your plan."
+          });
+        }
+
+        if (
+          elevenLabsError.message?.includes("bad_prompt") ||
+          elevenLabsError.message?.includes("Terms of Service")
+        ) {
+          console.log(
+            "🚫 ElevenLabs Music API: Prompt violated Terms of Service"
+          );
           console.log("💡 Trying ElevenLabs Text-to-Speech instead...");
         }
 
         // Try ElevenLabs TTS as fallback before going to Groq
         try {
           console.log("Generating audio with ElevenLabs TTS API (fallback)");
-          
+
           const getElevenLabsVoiceId = (singerVoice: string) => {
             const femaleVoices = [
-              "EXAVITQu4vr4xnSDxMaL", 
-              "MF3mGyEYCl7XYWbV9V6O", 
-              "ThT5KcBeYPX3keUQqHPh", 
+              "EXAVITQu4vr4xnSDxMaL",
+              "MF3mGyEYCl7XYWbV9V6O",
+              "ThT5KcBeYPX3keUQqHPh",
             ];
 
             const maleVoices = [
-              "pNInz6obpgDQGcFmaJgB", 
-              "VR6AewLTigWG4xSOukaG", 
-              "ErXwobaYiN019PkySvjV", 
+              "pNInz6obpgDQGcFmaJgB",
+              "VR6AewLTigWG4xSOukaG",
+              "ErXwobaYiN019PkySvjV",
             ];
 
             const voices = singerVoice === "Female" ? femaleVoices : maleVoices;
@@ -364,6 +384,15 @@ export const generateAudio = async (req: Request, res: Response) => {
           console.log("Successfully generated audio with ElevenLabs TTS API");
         } catch (ttsError: any) {
           console.error("ElevenLabs TTS also failed:", ttsError.message);
+          
+          // Check if it's a rate limit error (429)
+          if (ttsError.response && ttsError.response.status === 429) {
+            return res.status(429).json({
+              success: false,
+              msg: "ElevenLabs API limit exhausted. Please try again later or upgrade your plan."
+            });
+          }
+          
           console.log("Falling back to Groq TTS API...");
         }
       }
@@ -384,14 +413,15 @@ export const generateAudio = async (req: Request, res: Response) => {
         const ttsUrl = "https://api.groq.com/openai/v1/audio/speech";
         const gorqTtsPayload = {
           model: "playai-tts",
-          voice: song.singerVoice === "Female" ? "Arista-PlayAI" : "Fritz-PlayAI",
+          voice:
+            song.singerVoice === "Female" ? "Arista-PlayAI" : "Fritz-PlayAI",
           input: lyrics,
           response_format: "wav",
         };
 
         const groqTtsResp = await axios.post(ttsUrl, gorqTtsPayload, {
           headers: {
-             "Authorization": `Bearer ${apiKey}`,
+            Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
           },
           responseType: "arraybuffer",
@@ -412,17 +442,27 @@ export const generateAudio = async (req: Request, res: Response) => {
         console.log("Successfully generated audio with Groq TTS API");
       } catch (groqError: any) {
         console.error("Groq TTS API failed:", groqError.message);
+        
+        // Check if it's a rate limit error (429)
+        if (groqError.response && groqError.response.status === 429) {
+          return res.status(429).json({
+            success: false,
+            msg: "API limit exhausted. Please try again later or upgrade your plan."
+          });
+        }
+        
         console.log("Using browser TTS as final fallback");
         useBrowserTTS = true;
       }
     }
 
-    // Final fallback to browser TTS
+    // Final fallback - return error if no audio could be generated
     if (!audioUrl) {
-      console.log(
-        "Using browser TTS - no API keys configured or all APIs failed"
-      );
-      useBrowserTTS = true;
+      console.log("All audio generation methods failed");
+      return res.status(503).json({
+        success: false,
+        msg: "Audio generation service temporarily unavailable. Please try again later."
+      });
     }
 
     // Update song with audio URL if generated

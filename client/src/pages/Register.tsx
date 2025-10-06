@@ -120,9 +120,7 @@ export default function Register() {
   return (
     <>
       <MobileLayout step={0}>
-        {/* Main Content - Fit viewport */}
         <div className="flex-1 flex flex-col px-4 py-2 relative z-10 h-full max-h-screen overflow-hidden">
-          {/* Central illustration - smaller for better fit */}
           <div className="relative flex justify-center mb-2">
             <div className="relative">
               <img
@@ -140,7 +138,6 @@ export default function Register() {
             Register to create
           </h2>
 
-          {/* Registration Form */}
           <div className="w-full max-w-sm mx-auto flex-1 flex flex-col">
             <form
               onSubmit={handleSubmit}
@@ -207,7 +204,6 @@ export default function Register() {
                 />
               </div>
 
-              {/* Terms and conditions */}
               <div className="space-y-2 mt-1 px-1">
                 <label className="flex items-start text-white text-xs cursor-pointer font-gibson">
                   <div className="relative flex-shrink-0 mt-0.5 mr-2">
@@ -279,11 +275,11 @@ export default function Register() {
                 </div>
               )}
 
-              <div className="pt-3 mt-auto">
+              <div className="pt-3 flex justify-center mt-auto" style={{ backgroundColor: "transparent" }}>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-purple-800 py-3 rounded-full font-bold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl active:scale-95 transition-all duration-200 font-gibson tracking-wide cursor-pointer pointer-events-auto relative z-50"
+                  className="w-40 bg-gradient-to-r from-yellow-400 to-orange-400 text-purple-800 py-3 rounded-xl font-bold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl active:scale-95 transition-all duration-200 font-gibson tracking-wide cursor-pointer pointer-events-auto relative z-50"
                 >
                   {loading ? "Submitting..." : "Submit"}
                 </button>
@@ -291,15 +287,12 @@ export default function Register() {
             </form>
           </div>
 
-          {/* Bottom decoration */}
           <div className="mt-2 pb-2 flex justify-center space-x-4">
             <div className="text-yellow-300 text-sm opacity-60">♪</div>
             <div className="text-yellow-300 text-base opacity-80">♫</div>
             <div className="text-yellow-300 text-sm opacity-60">♪</div>
           </div>
         </div>
-
-        {/* OTP Modal Overlay */}
         {showOtpModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-10 mx-10 max-w-sm w-full shadow-2xl">
@@ -333,23 +326,25 @@ export default function Register() {
                   </p>
                 )}
 
-                <div className="text-center">
+                <div className="text-end">
                   <button
                     type="button"
-                    className="text-purple-600 text-sm font-gibson underline mb-4 cursor-pointer pointer-events-auto relative z-50"
+                    className="text-purple-700 font-bold font-gibson underline mb-4 cursor-pointer pointer-events-auto relative z-50"
                     onClick={() => alert("OTP: 1234")}
                   >
                     Resend OTP
                   </button>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={otpLoading || otp.join("").length !== 4}
-                  className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-800 py-3 rounded-full font-gibson font-bold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 cursor-pointer pointer-events-auto relative z-50"
-                >
-                  {otpLoading ? "Verifying..." : "Submit"}
-                </button>
+                <div className="flex justify-center">
+                  <button
+                    type="submit"
+                    disabled={otpLoading || otp.join("").length !== 4}
+                    className="w-40 bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-800 py-3 rounded-2xl font-gibson font-bold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 cursor-pointer pointer-events-auto relative z-50"
+                  >
+                    {otpLoading ? "Verifying..." : "Submit"}
+                  </button>
+                </div>
               </form>
             </div>
           </div>

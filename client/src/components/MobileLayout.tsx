@@ -1,4 +1,6 @@
+import { useState } from "react";
 import TopBar from "./TopBar";
+import Menu from "./Menu";
 
 type MobileLayoutProps = {
   children: React.ReactNode;
@@ -13,6 +15,20 @@ export default function MobileLayout({
   showTopBar = true,
   onMenuClick,
 }: MobileLayoutProps) {
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleMenuClick = () => {
+    if (onMenuClick) {
+      onMenuClick();
+    } else {
+      setIsMenuOpen(true);
+    }
+  };
+
+  const handleMenuClose = () => {
+    setIsMenuOpen(false);
+  };
   return (
     <>
       <div className="hidden md:flex min-h-screen bg-gradient-to-b from-purple-600 to-purple-800 flex-col items-center justify-center px-8">
@@ -61,13 +77,6 @@ export default function MobileLayout({
             className="absolute top-20 left-4 w-16 h-16 opacity-60"
           />
 
-          {/* Balloon - right side
-          <img 
-            src="/UI Images/Balloon.png" 
-            alt="Balloon" 
-            className="absolute top-32 right-4 w-12 h-16 opacity-70 animate-bounce"
-          /> */}
-
           <img
             src="/UI Images/Purple tone.png"
             alt="Music note"
@@ -78,7 +87,7 @@ export default function MobileLayout({
           <div className="absolute bottom-40 right-12 w-2 h-2 bg-yellow-400 rounded-full animate-bounce delay-300"></div>
         </div>
 
-        {showTopBar && <TopBar step={step} onMenuClick={onMenuClick} />}
+        {showTopBar && <TopBar step={step} onMenuClick={handleMenuClick} />}
 
         {showTopBar && (
           <div className="flex justify-center px-6 py-4">
@@ -101,6 +110,7 @@ export default function MobileLayout({
           {children}
         </div>
       </div>
+      <Menu isOpen={isMenuOpen} onClose={handleMenuClose} />
     </>
   );
 }

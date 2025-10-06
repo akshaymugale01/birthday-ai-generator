@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
 import songRoutes from "./routes/songRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -49,6 +50,7 @@ mongoose.connect(process.env.MONGO_URI!)
 
 app.use("/api/auth", authRoutes);
 app.use("/api/song", songRoutes);
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 

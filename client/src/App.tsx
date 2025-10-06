@@ -4,6 +4,7 @@ import Register from './pages/Register';
 // import Otp from './pages/Otp';
 import Details from './pages/Details';
 import Lyrics from './pages/Lyrics';
+import Users from './pages/Users';
 import './App.css';
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
           {/* <Route path="/otp" element={<Otp />} /> */}
           <Route path="/details" element={<Details />} />
           <Route path="/lyrics" element={<Lyrics />} />
+          <Route path="/users" element={<Users />} />
         </Routes>
       </div>
     </Router>

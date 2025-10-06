@@ -11,6 +11,10 @@ export default function Lyrics() {
   const [audioLoading, setAudioLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [songId, setSongId] = useState("");
+  const [audioStatus, setAudioStatus] = useState("");
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(
+    null
+  );
   const location = useLocation();
   const navigate = useNavigate();
   const userId = location.state?.userId;
@@ -38,10 +42,16 @@ export default function Lyrics() {
         }
       } catch (err) {
         if (axios.isAxiosError(err)) {
-          setError(
-            err.response?.data?.msg ||
-              "Failed to generate lyrics. Please try again."
-          );
+          if (err.response?.status === 429) {
+            setError(
+              "API limit exhausted. Please try again later or upgrade your plan."
+            );
+          } else {
+            setError(
+              err.response?.data?.msg ||
+                "Failed to generate lyrics. Please try again."
+            );
+          }
         } else {
           setError("Failed to generate lyrics. Please try again.");
         }
@@ -70,10 +80,16 @@ export default function Lyrics() {
       }
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(
-          err.response?.data?.msg ||
-            "Failed to generate lyrics. Please try again."
-        );
+        if (err.response?.status === 429) {
+          setError(
+            "API limit exhausted. Please try again later or upgrade your plan."
+          );
+        } else {
+          setError(
+            err.response?.data?.msg ||
+              "Failed to generate lyrics. Please try again."
+          );
+        }
       } else {
         setError("Failed to generate lyrics. Please try again.");
       }
@@ -89,8 +105,9 @@ export default function Lyrics() {
     }
 
     setAudioLoading(true);
-    setIsPlaying(true);
+    setIsPlaying(false);
     setError("");
+    setAudioStatus("🎵 Generating your personalized audio...");
 
     try {
       const response = await axios.post(API_ENDPOINTS.song.generateAudio, {
@@ -99,8 +116,13 @@ export default function Lyrics() {
       });
 
       if (response.data.success) {
+        setAudioStatus("🎶 Audio ready! Starting playback...");
+
         if (response.data.useBrowserTTS && response.data.lyrics) {
           if ("speechSynthesis" in window) {
+            setAudioStatus("🎤 Now playing with browser text-to-speech...");
+            setIsPlaying(true);
+
             const utterance = new SpeechSynthesisUtterance(
               response.data.lyrics
             );
@@ -123,45 +145,57 @@ export default function Lyrics() {
             // Add event listeners to track when speech ends
             utterance.onend = () => {
               setIsPlaying(false);
+              setAudioStatus("✅ Playback completed!");
+              setTimeout(() => setAudioStatus(""), 3000);
             };
-            
+
             utterance.onerror = () => {
               setIsPlaying(false);
+              setAudioStatus("");
+              setError("Speech playback failed. Please try again.");
             };
 
             window.speechSynthesis.speak(utterance);
-            setError(
-              "🎵 Playing with browser TTS! (Configure ElevenLabs API key for high-quality AI music generation)"
-            );
           } else {
             setError(
               "Browser TTS not supported. Please configure ElevenLabs API key for music generation."
             );
             setIsPlaying(false);
+            setAudioStatus("");
           }
         } else if (response.data.audioUrl && !response.data.useBrowserTTS) {
+          setAudioStatus("🎵 Now playing high-quality AI-generated audio...");
+          setIsPlaying(true);
+
           const audio = new Audio(response.data.audioUrl);
-          
+          setCurrentAudio(audio);
+
           // Add event listeners to track when audio ends
           audio.onended = () => {
             setIsPlaying(false);
+            setCurrentAudio(null);
+            setAudioStatus("✅ Playback completed!");
+            setTimeout(() => setAudioStatus(""), 3000);
           };
-          
+
           audio.onerror = () => {
             setIsPlaying(false);
+            setCurrentAudio(null);
+            setAudioStatus("");
             setError(
               "Audio playback failed. Please try again or check your internet connection."
             );
           };
-          
+
           audio.play().catch(() => {
             setIsPlaying(false);
+            setCurrentAudio(null);
+            setAudioStatus("");
             setError(
               "Audio playback failed. Please try again or check your internet connection."
             );
           });
         } else {
-          // Navigate to player page or show success message
           navigate("/player", {
             state: {
               userId,
@@ -170,24 +204,53 @@ export default function Lyrics() {
             },
           });
           setIsPlaying(false);
+          setAudioStatus("");
         }
       } else {
         setError("Failed to generate audio. Please try again.");
         setIsPlaying(false);
+        setAudioStatus("");
       }
     } catch (err) {
       setIsPlaying(false);
+      setAudioStatus("");
       if (axios.isAxiosError(err)) {
-        setError(
-          err.response?.data?.msg ||
-            "Failed to generate audio. Please try again."
-        );
+        if (err.response?.status === 429) {
+          setError(
+            "API limit exhausted. Please try again later or upgrade your plan."
+          );
+        } else if (err.response?.status === 503) {
+          setError(
+            "Audio generation service temporarily unavailable. Please try again later."
+          );
+        } else {
+          setError(
+            err.response?.data?.msg ||
+              "Failed to generate audio. Please try again."
+          );
+        }
       } else {
         setError("Failed to generate audio. Please try again.");
       }
     } finally {
       setAudioLoading(false);
     }
+  };
+
+  const handleStopSong = () => {
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+    }
+
+    setIsPlaying(false);
+    setAudioStatus("⏹️ Playback stopped");
+    setTimeout(() => setAudioStatus(""), 2000);
   };
 
   if (loading) {
@@ -226,6 +289,17 @@ export default function Lyrics() {
           </div>
         )}
 
+        {audioStatus && (
+          <div className="bg-blue-500 text-white p-4 rounded-lg mb-4">
+            <div className="flex items-center space-x-2">
+              {audioLoading && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              )}
+              <p className="text-sm">{audioStatus}</p>
+            </div>
+          </div>
+        )}
+
         {lyrics && (
           <div className="bg-white rounded-2xl p-6 mb-6 flex-1 overflow-y-auto shadow-lg">
             <pre className="text-purple-800 text-sm whitespace-pre-wrap leading-relaxed font-medium">
@@ -234,17 +308,38 @@ export default function Lyrics() {
           </div>
         )}
 
-        <div className="flex justify-center space-x-4 pb-4">
-          <button
-            onClick={async () => {
-              if (audioLoading || isPlaying) return;
-              await handlePlaySong();
-            }}
-            disabled={audioLoading || isPlaying || !lyrics || loading}
-            className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-8 py-4 w-full  font-bold text-sm transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
-          >
-            {audioLoading || isPlaying ? "Playing Song..." : "PLAY SONG"}
-          </button>
+        <div
+          className="flex justify-center space-x-4 pb-4"
+          style={{ backgroundColor: "transparent" }}
+        >
+          {isPlaying ? (
+            <button
+              onClick={handleStopSong}
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-8 py-4 w-full font-bold text-sm transition-all duration-200 transform hover:scale-105"
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <span>STOP SONG</span>
+              </div>
+            </button>
+          ) : (
+            <button
+              onClick={async () => {
+                if (audioLoading) return;
+                await handlePlaySong();
+              }}
+              disabled={audioLoading || !lyrics || loading}
+              className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-8 py-4 w-full font-bold text-sm transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed relative"
+            >
+              <div className="flex items-center justify-center space-x-2">
+                {audioLoading && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                )}
+                <span>
+                  {audioLoading ? "GENERATING AUDIO..." : "PLAY SONG"}
+                </span>
+              </div>
+            </button>
+          )}
         </div>
       </div>
     </MobileLayout>

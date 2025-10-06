@@ -46,7 +46,7 @@ export default function Details() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showTopShadow, setShowTopShadow] = useState(false);
-  const [showBottomShadow, setShowBottomShadow] = useState(false);
+  // Removed unused bottom shadow state
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,21 +60,14 @@ export default function Details() {
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } =
-        scrollContainerRef.current;
+      const { scrollTop } = scrollContainerRef.current;
 
-      // Show top shadow if scrolled down
       setShowTopShadow(scrollTop > 10);
-
-      // Show bottom shadow if not at bottom
-      setShowBottomShadow(scrollTop + clientHeight < scrollHeight - 10);
     }
   };
-
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
-      // Check initial scroll state
       handleScroll();
 
       scrollContainer.addEventListener("scroll", handleScroll);
@@ -266,7 +259,6 @@ export default function Details() {
                   Mood
                 </h3>
               </div>
-
               <div className="mt-4 p-4">
                 <div className="grid grid-cols-5 gap-6">
                   {moodOptions.map((option) => (
@@ -283,11 +275,11 @@ export default function Details() {
                           })
                         }
                         className={`flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 transform hover:scale-110
-              ${
-                form.mood === option.id
-                  ? "bg-[#DDB678] ring-2 ring-white/50"
-                  : "bg-white"
-              }`}
+                          ${
+                            form.mood === option.id
+                              ? "bg-[#DDB678] ring-2 ring-white/50"
+                              : "bg-white"
+                          }`}
                       >
                         <img
                           src={option.icon}
@@ -295,7 +287,6 @@ export default function Details() {
                           className="w-7"
                         />
                       </button>
-
                       <span className="text-white text-xs text-center font-medium">
                         {option.label}
                       </span>
@@ -312,7 +303,6 @@ export default function Details() {
                   Genre
                 </h3>
               </div>
-
               <div className="p-5">
                 <div className="grid grid-cols-5 gap-3">
                   {genreOptions.map((option) => (
@@ -329,7 +319,11 @@ export default function Details() {
                           })
                         }
                         className={`flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 transform hover:scale-110
-              ${form.genre === option.id ? "bg-[#DDB678]" : "bg-white"}`}
+                          ${
+                            form.genre === option.id
+                              ? "bg-[#DDB678]"
+                              : "bg-white"
+                          }`}
                       >
                         <img
                           src={option.icon}
@@ -337,7 +331,6 @@ export default function Details() {
                           className="w-7"
                         />
                       </button>
-
                       <span className="text-white text-xs text-center font-medium">
                         {option.label}
                       </span>
@@ -353,7 +346,6 @@ export default function Details() {
                   Singer's voice
                 </h3>
               </div>
-
               <div className="p-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col items-center space-y-2">
@@ -361,7 +353,11 @@ export default function Details() {
                       type="button"
                       onClick={() => setForm({ ...form, singerVoice: "Male" })}
                       className={`flex flex-col items-center justify-center w-28 h-14 rounded-lg transition-all duration-300 transform hover:scale-105
-            ${form.singerVoice === "Male" ? "bg-[#DDB678]" : "bg-white"}`}
+                        ${
+                          form.singerVoice === "Male"
+                            ? "bg-[#DDB678]"
+                            : "bg-white"
+                        }`}
                     >
                       <img
                         src="/UI Images/Icons/Male.png"
@@ -373,7 +369,6 @@ export default function Details() {
                       Male
                     </span>
                   </div>
-
                   <div className="flex flex-col items-center space-y-2">
                     <button
                       type="button"
@@ -381,7 +376,11 @@ export default function Details() {
                         setForm({ ...form, singerVoice: "Female" })
                       }
                       className={`flex flex-col items-center justify-center w-28 h-14 rounded-lg transition-all duration-300 transform hover:scale-105
-            ${form.singerVoice === "Female" ? "bg-[#DDB678]" : "bg-white"}`}
+                        ${
+                          form.singerVoice === "Female"
+                            ? "bg-[#DDB678]"
+                            : "bg-white"
+                        }`}
                     >
                       <img
                         src="/UI Images/Icons/Female.png"
@@ -435,20 +434,17 @@ export default function Details() {
             <h2 className="text-white text-xl font-bold mb-2">
               What would you like their song's vibe to be?
             </h2>
-
             <div className="relative inline-block">
               <img
                 src="/UI Images/Headphone.png"
                 alt="Headphones"
-                className="w-44 mx-auto mb-4 opacity-50 relative z-10"
+                className="w-52 mx-auto mb-4 opacity-100 relative z-10"
               />
-
               <img
                 src="/UI Images/Purple Music Tone.png"
                 alt="Music note"
                 className="absolute -bottom-2 -left-4 w-8 h-8 opacity-90 animate-pulse"
               />
-
               <img
                 src="/UI Images/Balloon2.png"
                 alt="Balloon"
@@ -457,52 +453,43 @@ export default function Details() {
             </div>
           </div>
         )}
-
         {showTopShadow && (
           <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black/20 to-transparent pointer-events-none z-10 mx-4 rounded-t-lg" />
         )}
-
         <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto scrollbar-hide scroll-smooth"
         >
           <div className="pb-4">
             {renderStep()}
-
             {error && (
               <p className="text-red-300 text-sm text-center mt-4">{error}</p>
             )}
           </div>
         </div>
-
-        {showBottomShadow && (
-          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/20 to-transparent pointer-events-none z-10 mx-4 rounded-b-lg" />
-        )}
       </div>
-
       <div
+        className="relative flex items-center justify-center mb-6"
         style={{ backgroundColor: "transparent" }}
-        className="p-4 max-w-md mx-auto w-full"
       >
-        <div className="flex flex-col items-center">
-          {currentStep < 1 ? (
-            <button
-              onClick={handleNext}
-              disabled={!canProceed()}
-              className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-800 px-8 py-3 rounded-full font-bold disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 cursor-pointer pointer-events-auto relative z-50"
-            >
-              Proceed
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={!canProceed() || loading}
-              className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-800 px-8 py-3 rounded-full font-bold disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 cursor-pointer pointer-events-auto relative z-50"
-            >
-              {loading ? "Processing..." : "Proceed"}
-            </button>
-          )}
-        </div>
+        <div className="absolute inset-0 w-full h-full rounded-xl backdrop-blur-md z-0"></div>
+        {currentStep < 1 ? (
+          <button
+            onClick={handleNext}
+            disabled={!canProceed()}
+            className="relative z-10 bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-800 px-10 py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 cursor-pointer pointer-events-auto"
+          >
+            Proceed
+          </button>
+        ) : (
+          <button
+            onClick={handleSubmit}
+            disabled={!canProceed() || loading}
+            className="relative z-10 bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-800 px-10 py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 cursor-pointer pointer-events-auto"
+          >
+            {loading ? "Processing..." : "Proceed"}
+          </button>
+        )}
       </div>
     </MobileLayout>
   );
