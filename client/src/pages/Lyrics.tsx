@@ -128,11 +128,12 @@ export default function Lyrics() {
             );
           }
         } else if (response.data.audioUrl && !response.data.useBrowserTTS) {
-          // Use generated audio file
           const audio = new Audio(response.data.audioUrl);
-          audio.play().catch((err) => {
-            console.error("Error playing audio:", err);
-            setError("Failed to play audio. Please try again.");
+          audio.play().catch(() => {
+            // console.error("Error playing audio:", err);
+            setError(
+              "Limit Exhausted: Groq TTS API rate limit reached. Please try again later or upgrade your plan."
+            );
           });
         } else {
           // Navigate to player page or show success message
@@ -207,7 +208,10 @@ export default function Lyrics() {
 
         <div className="flex justify-center space-x-4 pb-4">
           <button
-            onClick={handlePlaySong}
+            onClick={async () => {
+              if (audioLoading) return;
+              await handlePlaySong();
+            }}
             disabled={audioLoading || !lyrics || loading}
             className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-8 py-4 w-full  font-bold text-sm transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
           >
