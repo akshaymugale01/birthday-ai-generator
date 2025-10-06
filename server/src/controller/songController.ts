@@ -377,19 +377,24 @@ export const generateAudio = async (req: Request, res: Response) => {
     ) {
       try {
         console.log("Generating audio with Groq TTS API");
-        console.log("Converting these exact lyrics with Groq:");
         console.log("=".repeat(50));
-        console.log(lyrics);
+        console.log("dynamic", lyrics);
         console.log("=".repeat(50));
-        const groq = new Groq({
-          apiKey: process.env.GROQ_API_KEY,
-        });
-        const response = await groq.audio.speech.create({
+        const apiKey = process.env.GROQ_API_KEY;
+        const ttsUrl = "https://api.groq.com/openai/v1/audio/speech";
+        const gorqTtsPayload = {
           model: "playai-tts",
-          voice:
-            song.singerVoice === "Female" ? "Arista-PlayAI" : "Fritz-PlayAI",
+          voice: song.singerVoice === "Female" ? "Arista-PlayAI" : "Fritz-PlayAI",
           input: lyrics,
           response_format: "wav",
+        };
+
+        const groqTtsResp = await axios.post(ttsUrl, gorqTtsPayload, {
+          headers: {
+             "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          responseType: "arraybuffer",
         });
 
         const audioDir = path.join(process.cwd(), "public", "audio");
@@ -399,9 +404,7 @@ export const generateAudio = async (req: Request, res: Response) => {
 
         const fileName = `${songId}_groq.wav`;
         const filePath = path.join(audioDir, fileName);
-
-        const buffer = Buffer.from(await response.arrayBuffer());
-        await fs.promises.writeFile(filePath, buffer);
+        await fs.promises.writeFile(filePath, Buffer.from(groqTtsResp.data));
 
         audioUrl = `${
           process.env.BASE_URL || "http://localhost:3000"

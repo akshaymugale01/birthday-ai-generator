@@ -19,21 +19,21 @@ export default function TopBar({ step = 0, onMenuClick }: TopBarProps) {
 
   return (
     <div className="w-full bg-purple-900 bg-opacity-50 backdrop-blur-sm z-10">
-      <div className="flex justify-between items-center px-6 py-4">
+      <div className="flex justify-between items-center px-4">
         <div className="flex flex-col items-start">
-          <img src="/UI Images/Cadbury Logo.png" alt="Logo" className="w-24 h-10" />
+          <img src="/UI Images/Cadbury Logo.png" alt="Logo" className="w-20" />
         </div>
-        <div className="flex-1 flex justify-center">
-          <img src="/UI Images/2d logo.png" alt="Logo" className="w-32 h-16" />
+        <div className="flex-1 flex item-start">
+          <img src="/UI Images/2d logo.png" alt="Logo" className="w-44" />
         </div>
-        <button className="text-white p-2" aria-label="Menu" onClick={onMenuClick}>
-          <div className="w-6 h-0.5 bg-white mb-1.5 rounded"></div>
-          <div className="w-6 h-0.5 bg-white mb-1.5 rounded"></div>
-          <div className="w-6 h-0.5 bg-white rounded"></div>
+        <button className="text-white" aria-label="Menu" onClick={onMenuClick}>
+          <img
+            src="/UI Images/Hamburger.png"
+            alt="hamburger menu"
+            className="w-10 h-6"
+          />
         </button>
       </div>
     </div>
   );
 }
-
-

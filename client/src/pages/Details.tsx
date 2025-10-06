@@ -440,7 +440,7 @@ export default function Details() {
               <img
                 src="/UI Images/Headphone.png"
                 alt="Headphones"
-                className="w-64 h-48 mx-auto mb-4 opacity-50 relative z-10"
+                className="w-44 mx-auto mb-4 opacity-50 relative z-10"
               />
 
               <img
