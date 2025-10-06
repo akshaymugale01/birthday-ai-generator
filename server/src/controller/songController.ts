@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import axios from "axios";
 import { Groq } from "groq-sdk";
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import fs from "fs";
 import path from "path";
 import User from "../models/User.js";
@@ -31,7 +32,7 @@ export const updateUserDetails = async (req: Request, res: Response) => {
         .status(400)
         .json({ success: false, msg: "All fields are required" });
     }
-    
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { birthdayPersonName, age, gender, mood, genre, singerVoice },
@@ -209,13 +210,177 @@ export const generateAudio = async (req: Request, res: Response) => {
     }
 
     let audioUrl = null;
+    let useBrowserTTS = false;
 
-    if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === "") {
-      console.log("Groq API key not configured - using mock audio");
-      audioUrl = `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3`;
+    // Generate music prompt for ElevenLabs Music API
+    const generateMusicPrompt = (
+      lyrics: string,
+      genre: string,
+      mood: string,
+      singerVoice: string
+    ) => {
+      const tempoMap: { [key: string]: string } = {
+      Happy: "upbeat, energetic",
+      Calm: "slow, peaceful",
+      Romantic: "intimate, slow",
+      Funny: "playful, bouncy",
+      Motivational: "driving, powerful",
+      };
+
+      const instrumentMap: { [key: string]: string } = {
+      Pop: "modern pop with synthesizers, electric guitar, drums, and bass",
+      Rock: "electric guitars, powerful drums, bass guitar with rock energy",
+      "Hip-Hop": "hip-hop beats, bass, electronic sounds, and urban style",
+      Rap: "strong beats, bass-heavy production, and rhythmic backing",
+      EDM: "electronic dance music with synthesizers, electronic beats, and drops",
+      Desi: "traditional Indian instruments like tabla, sitar, harmonium, and ethnic percussion",
+      };
+
+      const tempo = tempoMap[mood] || "";
+      const instruments =
+      instrumentMap[genre] || "pop arrangement with guitar, piano, and drums";
+      const vocalStyle =
+      singerVoice === "Female" ? "female lead vocals" : "male lead vocals";
+
+      const prompt = `Create birthday celebration song ans lyrics ${lyrics} gender ${vocalStyle}. 
+      Musical style: ${tempo} ${genre} song with ${instruments}. 
+      Include musical arrangements that complement the ${mood} mood.`;
+
+      console.log("Music Prompt ================= :", prompt);
+      return prompt;
+    };
+
+    if (
+      !process.env.ELEVENLABS_API_KEY ||
+      process.env.ELEVENLABS_API_KEY === ""
+    ) {
+      console.log("ElevenLabs API key not configured, trying Groq...");
     } else {
+      console.log(
+        "ElevenLabs API Key status: Connected ---------"
+      );
+      
+      const elevenlabs = new ElevenLabsClient({
+        apiKey: process.env.ELEVENLABS_API_KEY,
+      });
+
+      try {
+        const musicPrompt = generateMusicPrompt(
+          lyrics,
+          song.genre,
+          song.mood,
+          song.singerVoice
+        );
+
+        console.log("musicPrompt Prompt =======================;", musicPrompt);
+        const audioBuffer = await elevenlabs.music.compose({
+          prompt: musicPrompt,
+          musicLengthMs: 30000, // 30 Sec audio
+        });
+
+        console.log("audioBuffer Prompt =======================;", audioBuffer);
+
+        const audioDir = path.join(process.cwd(), "public", "audio");
+        if (!fs.existsSync(audioDir)) {
+          fs.mkdirSync(audioDir, { recursive: true });
+        }
+
+        const fileName = `${songId}_elevenlabs.mp3`;
+        const filePath = path.join(audioDir, fileName);
+
+        await fs.promises.writeFile(filePath, audioBuffer);
+
+        audioUrl = `${
+          process.env.BASE_URL || "http://localhost:3000"
+        }/audio/${fileName}`;
+
+        console.log("Successfully generated music with ElevenLabs Music API");
+      } catch (elevenLabsError: any) {
+        console.error("ElevenLabs Music API failed with error:", {
+          message: elevenLabsError.message,
+          status: elevenLabsError.status,
+          code: elevenLabsError.code,
+          details:
+            elevenLabsError.response?.data ||
+            elevenLabsError.response ||
+            "No additional details",
+        });
+
+        if (elevenLabsError.message?.includes('bad_prompt') || elevenLabsError.message?.includes('Terms of Service')) {
+          console.log("🚫 ElevenLabs Music API: Prompt violated Terms of Service");
+          console.log("💡 Trying ElevenLabs Text-to-Speech instead...");
+        }
+
+        // Try ElevenLabs TTS as fallback before going to Groq
+        try {
+          console.log("Generating audio with ElevenLabs TTS API (fallback)");
+          
+          const getElevenLabsVoiceId = (singerVoice: string) => {
+            const femaleVoices = [
+              "EXAVITQu4vr4xnSDxMaL", 
+              "MF3mGyEYCl7XYWbV9V6O", 
+              "ThT5KcBeYPX3keUQqHPh", 
+            ];
+
+            const maleVoices = [
+              "pNInz6obpgDQGcFmaJgB", 
+              "VR6AewLTigWG4xSOukaG", 
+              "ErXwobaYiN019PkySvjV", 
+            ];
+
+            const voices = singerVoice === "Female" ? femaleVoices : maleVoices;
+            return voices[0];
+          };
+
+          const voiceId = getElevenLabsVoiceId(song.singerVoice);
+          console.log("Using ElevenLabs TTS voice ID:", voiceId);
+          console.log("Converting these exact lyrics to speech:");
+          console.log("=".repeat(50));
+          console.log(lyrics);
+          console.log("=".repeat(50));
+
+          const ttsBuffer = await elevenlabs.textToSpeech.convert(voiceId!, {
+            text: lyrics,
+            voiceSettings: {
+              stability: 0.5,
+              similarityBoost: 0.75,
+            },
+          });
+
+          const audioDir = path.join(process.cwd(), "public", "audio");
+          if (!fs.existsSync(audioDir)) {
+            fs.mkdirSync(audioDir, { recursive: true });
+          }
+
+          const fileName = `${songId}_elevenlabs_tts.mp3`;
+          const filePath = path.join(audioDir, fileName);
+
+          await fs.promises.writeFile(filePath, ttsBuffer);
+
+          audioUrl = `${
+            process.env.BASE_URL || "http://localhost:3000"
+          }/audio/${fileName}`;
+
+          console.log("Successfully generated audio with ElevenLabs TTS API");
+        } catch (ttsError: any) {
+          console.error("ElevenLabs TTS also failed:", ttsError.message);
+          console.log("Falling back to Groq TTS API...");
+        }
+      }
+    }
+
+    // Fallback to Groq TTS if ElevenLabs failed
+    if (
+      !audioUrl &&
+      process.env.GROQ_API_KEY &&
+      process.env.GROQ_API_KEY !== ""
+    ) {
       try {
         console.log("Generating audio with Groq TTS API");
+        console.log("Converting these exact lyrics with Groq:");
+        console.log("=".repeat(50));
+        console.log(lyrics);
+        console.log("=".repeat(50));
         const groq = new Groq({
           apiKey: process.env.GROQ_API_KEY,
         });
@@ -223,7 +388,7 @@ export const generateAudio = async (req: Request, res: Response) => {
           model: "playai-tts",
           voice:
             song.singerVoice === "Female" ? "Arista-PlayAI" : "Fritz-PlayAI",
-          input: `Here's your personalized birthday song! ${lyrics}`,
+          input: lyrics,
           response_format: "wav",
         });
 
@@ -232,7 +397,7 @@ export const generateAudio = async (req: Request, res: Response) => {
           fs.mkdirSync(audioDir, { recursive: true });
         }
 
-        const fileName = `${songId}.wav`;
+        const fileName = `${songId}_groq.wav`;
         const filePath = path.join(audioDir, fileName);
 
         const buffer = Buffer.from(await response.arrayBuffer());
@@ -244,20 +409,36 @@ export const generateAudio = async (req: Request, res: Response) => {
         console.log("Successfully generated audio with Groq TTS API");
       } catch (groqError: any) {
         console.error("Groq TTS API failed:", groqError.message);
-        console.log("Using mock audio URL as fallback");
-        audioUrl = `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3`;
+        console.log("Using browser TTS as final fallback");
+        useBrowserTTS = true;
       }
     }
 
-    await Song.findByIdAndUpdate(songId, { audioUrl });
+    // Final fallback to browser TTS
+    if (!audioUrl) {
+      console.log(
+        "Using browser TTS - no API keys configured or all APIs failed"
+      );
+      useBrowserTTS = true;
+    }
+
+    // Update song with audio URL if generated
+    if (audioUrl) {
+      await Song.findByIdAndUpdate(songId, { audioUrl });
+    }
+
     res.json({
       success: true,
       audioUrl,
-      useBrowserTTS: audioUrl.includes("example.com"),
+      useBrowserTTS,
       lyrics: lyrics,
-      message: audioUrl.includes("example.com")
-        ? "Using browser TTS (Groq PlayAI terms not accepted yet)"
-        : "Audio generated successfully with Groq TTS",
+      message: useBrowserTTS
+        ? "Using browser TTS (Configure ElevenLabs API key for high-quality voice generation)"
+        : audioUrl?.includes("elevenlabs") && audioUrl.includes("_tts")
+        ? "Audio generated successfully with ElevenLabs TTS - speaking your exact lyrics with high-quality voice!"
+        : audioUrl?.includes("elevenlabs")
+        ? "Music generated successfully with ElevenLabs Music AI - full musical arrangement!"
+        : "Audio generated successfully with Groq TTS - speaking your exact lyrics!",
     });
   } catch (error) {
     console.error("Generate audio error:", error);

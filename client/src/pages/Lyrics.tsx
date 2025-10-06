@@ -9,6 +9,7 @@ export default function Lyrics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [audioLoading, setAudioLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [songId, setSongId] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
@@ -88,6 +89,7 @@ export default function Lyrics() {
     }
 
     setAudioLoading(true);
+    setIsPlaying(true);
     setError("");
 
     try {
@@ -118,21 +120,44 @@ export default function Lyrics() {
               utterance.voice = preferredVoice;
             }
 
+            // Add event listeners to track when speech ends
+            utterance.onend = () => {
+              setIsPlaying(false);
+            };
+            
+            utterance.onerror = () => {
+              setIsPlaying(false);
+            };
+
             window.speechSynthesis.speak(utterance);
             setError(
-              "🎵 Playing with browser TTS! (Go to Groq console to enable high-quality audio)"
+              "🎵 Playing with browser TTS! (Configure ElevenLabs API key for high-quality AI music generation)"
             );
           } else {
             setError(
-              "Browser TTS not supported. Please accept Groq PlayAI terms for audio generation."
+              "Browser TTS not supported. Please configure ElevenLabs API key for music generation."
             );
+            setIsPlaying(false);
           }
         } else if (response.data.audioUrl && !response.data.useBrowserTTS) {
           const audio = new Audio(response.data.audioUrl);
-          audio.play().catch(() => {
-            // console.error("Error playing audio:", err);
+          
+          // Add event listeners to track when audio ends
+          audio.onended = () => {
+            setIsPlaying(false);
+          };
+          
+          audio.onerror = () => {
+            setIsPlaying(false);
             setError(
-              "Limit Exhausted: Groq TTS API rate limit reached. Please try again later or upgrade your plan."
+              "Audio playback failed. Please try again or check your internet connection."
+            );
+          };
+          
+          audio.play().catch(() => {
+            setIsPlaying(false);
+            setError(
+              "Audio playback failed. Please try again or check your internet connection."
             );
           });
         } else {
@@ -144,11 +169,14 @@ export default function Lyrics() {
               audioData: response.data,
             },
           });
+          setIsPlaying(false);
         }
       } else {
         setError("Failed to generate audio. Please try again.");
+        setIsPlaying(false);
       }
     } catch (err) {
+      setIsPlaying(false);
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.msg ||
@@ -209,13 +237,13 @@ export default function Lyrics() {
         <div className="flex justify-center space-x-4 pb-4">
           <button
             onClick={async () => {
-              if (audioLoading) return;
+              if (audioLoading || isPlaying) return;
               await handlePlaySong();
             }}
-            disabled={audioLoading || !lyrics || loading}
-            className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-8 py-4 w-full  font-bold text-sm transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+            disabled={audioLoading || isPlaying || !lyrics || loading}
+            className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-8 py-4 w-full  font-bold text-sm transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
           >
-            {audioLoading ? "Playing Song..." : "PLAY SONG"}
+            {audioLoading || isPlaying ? "Playing Song..." : "PLAY SONG"}
           </button>
         </div>
       </div>
