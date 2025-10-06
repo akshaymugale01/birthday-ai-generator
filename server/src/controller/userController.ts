@@ -14,7 +14,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .select('birthdayPersonName age gender mood genre singerVoice createdAt updatedAt');
+      .select('name age gender mood genre singerVoice createdAt updatedAt');
 
     res.status(200).json({
       success: true,

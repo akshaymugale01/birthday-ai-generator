@@ -5,7 +5,7 @@ import { API_ENDPOINTS } from "../utils/baseUrl";
 
 interface User {
   _id: string;
-  birthdayPersonName: string;
+  name: string;
   age: number;
   gender: string;
   mood: string;
@@ -91,7 +91,7 @@ export default function Users() {
                 >
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-white font-bold text-lg">
-                      {user.birthdayPersonName}
+                      {user?.name}
                     </h3>
                     <span className="text-yellow-300 text-xs">
                       #{(currentPage - 1) * usersPerPage + index + 1}
