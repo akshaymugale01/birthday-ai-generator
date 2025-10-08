@@ -252,7 +252,7 @@ export default function Details() {
 
       case 1:
         return (
-          <div className="space-y-4">
+          <div className="space-y-4" style={{paddingBottom: "96px"}}>
             <div className="bg-[#590b9d] rounded-2xl border-yellow-400 border shadow-lg overflow-hidden max-w-md mx-auto">
               <div className="bg-[#DDB678] py-2">
                 <h3 className="text-[#49246A] font-bold text-center text-xl">
@@ -469,15 +469,15 @@ export default function Details() {
         </div>
       </div>
       <div
-        className="relative flex items-center justify-center mb-6"
-        style={{ backgroundColor: "transparent" }}
+        className="fixed bottom-0 left-0 w-full flex justify-center items-center py-8"
+        style={{
+          backgroundColor: "rgba(128, 0, 128, 0.0)", backdropFilter: "blur(4px)", zIndex: 50 }}
       >
-        <div className="absolute inset-0 w-full h-full rounded-xl backdrop-blur-md z-0"></div>
         {currentStep < 1 ? (
           <button
             onClick={handleNext}
             disabled={!canProceed()}
-            className="relative z-10 bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-800 px-10 py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 cursor-pointer pointer-events-auto"
+            className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-800 px-10 py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 cursor-pointer"
           >
             Proceed
           </button>
@@ -485,7 +485,7 @@ export default function Details() {
           <button
             onClick={handleSubmit}
             disabled={!canProceed() || loading}
-            className="relative z-10 bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-800 px-10 py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 cursor-pointer pointer-events-auto"
+            className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-800 px-10 py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200 cursor-pointer"
           >
             {loading ? "Processing..." : "Proceed"}
           </button>
